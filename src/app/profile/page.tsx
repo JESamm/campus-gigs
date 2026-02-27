@@ -142,14 +142,45 @@ export default function ProfilePage() {
     }
   };
 
+  // Compress image client-side to stay under Vercel's 4.5 MB body limit
+  const compressImage = (file: File, maxWidth = 800, quality = 0.8): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error("Compression failed"))),
+          "image/jpeg",
+          quality,
+        );
+      };
+      img.onerror = () => reject(new Error("Could not read image"));
+      img.src = URL.createObjectURL(file);
+    });
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setAvatarUploading(true);
     try {
+      // Compress to keep well under Vercel's 4.5 MB body limit
+      const compressed = await compressImage(file);
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", new File([compressed], file.name, { type: "image/jpeg" }));
       const res = await fetch("/api/upload", { method: "POST", body: fd });
+
+      // Handle non-JSON responses (Vercel 413 returns plain text)
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await res.text();
+        throw new Error(text || `Upload failed (${res.status})`);
+      }
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Upload failed (${res.status})`);
       const url = data.url;
