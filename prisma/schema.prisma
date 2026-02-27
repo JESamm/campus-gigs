@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  password     String
+  bio          String?
+  avatar       String?
+  skills       String   @default("[]")
+  university   String?
+  major        String?
+  yearsOfStudy String?
+  // Social / external links
+  githubUrl    String?
+  websiteUrl   String?
+  linkedinUrl  String?
+  twitterUrl   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  postedGigs           Gig[]                 @relation("PostedGigs")
+  gigApplications      GigApplication[]      @relation("Applicant")
+  acceptedGigs         GigApplication[]      @relation("AcceptedBy")
+  createdProjects      Project[]             @relation("CreatedBy")
+  projectMemberships   ProjectMember[]
+  sentMessages         Message[]             @relation("Sender")
+  receivedMessages     Message[]             @relation("Recipient")
+  notifications        Notification[]
+  projectDiscussions   ProjectDiscussion[]
+  discussionReplies    DiscussionReply[]
+  uploadedFiles        ProjectFile[]
+
+  @@index([email])
+}
+
+model Gig {
+  id           String    @id @default(cuid())
+  title        String
+  description  String
+  category     String
+  skillsNeeded String    @default("[]")
+  budget       Float
+  duration     String
+  status       String    @default("open")
+  attachments  String    @default("[]")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deadline     DateTime?
+
+  posterId      String
+  poster        User             @relation("PostedGigs", fields: [posterId], references: [id], onDelete: Cascade)
+  applications  GigApplication[]
+  messages      Message[]        @relation("GigMessages")
+  notifications Notification[]
+
+  @@index([posterId])
+  @@index([status])
+  @@index([category])
+}
+
+model GigApplication {
+  id          String    @id @default(cuid())
+  coverLetter String?
+  status      String    @default("pending")
+  appliedAt   DateTime  @default(now())
+  respondedAt DateTime?
+
+  gigId        String
+  gig          Gig   @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  applicantId  String
+  applicant    User  @relation("Applicant", fields: [applicantId], references: [id], onDelete: Cascade)
+  acceptedById String?
+  acceptedBy   User? @relation("AcceptedBy", fields: [acceptedById], references: [id], onDelete: SetNull)
+
+  @@unique([gigId, applicantId])
+  @@index([gigId])
+  @@index([applicantId])
+  @@index([status])
+}
+
+model Project {
+  id           String    @id @default(cuid())
+  title        String
+  description  String
+  category     String
+  skillsNeeded String    @default("[]")
+  maxMembers   Int       @default(5)
+  status       String    @default("open")
+  visibility   String    @default("public")   // "public" | "private"
+  readme       String?                         // Markdown readme/description
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deadline     DateTime?
+
+  createdById   String
+  createdBy     User                @relation("CreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  members       ProjectMember[]
+  files         ProjectFile[]
+  discussions   ProjectDiscussion[]
+  messages      Message[]           @relation("ProjectMessages")
+  notifications Notification[]
+
+  @@index([createdById])
+  @@index([status])
+  @@index([category])
+  @@index([visibility])
+}
+
+model ProjectMember {
+  id       String   @id @default(cuid())
+  joinedAt DateTime @default(now())
+  role     String   @default("member")
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  fileUrl   String?
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
+
+  senderId    String
+  sender      User     @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId String?
+  recipient   User?    @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  gigId       String?
+  gig         Gig?     @relation("GigMessages", fields: [gigId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project? @relation("ProjectMessages", fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([gigId])
+  @@index([projectId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gigId     String?
+  gig       Gig?     @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+}
+
+// ─── Project Hub Models ──────────────────────────────────────────────────────
+
+model ProjectFile {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  size        Int      @default(0)   // bytes
+  mimeType    String   @default("application/octet-stream")
+  path        String   @default("/") // virtual directory path
+  createdAt   DateTime @default(now())
+
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy  User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([uploadedById])
+}
+
+model ProjectDiscussion {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  pinned    Boolean  @default(false)
+  closed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replies   DiscussionReply[]
+
+  @@index([projectId])
+  @@index([authorId])
+}
+
+model DiscussionReply {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  discussionId String
+  discussion   ProjectDiscussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([discussionId])
+  @@index([authorId])
+}

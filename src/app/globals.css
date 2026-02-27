@@ -1,1 +1,59 @@
 @import "tailwindcss";
+
+/* ── Tailwind v4: enable .dark class variant ── */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  Light mode: remap Tailwind's slate palette so every bg-slate-* and
+  text-slate-* / text-white class automatically inverts.
+  No component changes needed — the variables do the work.
+*/
+html:not(.dark) {
+  /* Backgrounds: dark slate → light equivalents */
+  --color-slate-950: oklch(0.984 0.003 247.858);   /* was darkest, now ~white */
+  --color-slate-900: oklch(0.968 0.007 247.896);   /* slightly off-white     */
+  --color-slate-800: oklch(0.929 0.013 255.508);   /* light blue-gray        */
+  --color-slate-700: oklch(0.869 0.022 252.894);   /* soft border            */
+  --color-slate-600: oklch(0.704 0.04  256.788);   /* mid-tone border        */
+  /* Text: light shades → dark readable */
+  --color-slate-500: oklch(0.446 0.043 257.281);
+  --color-slate-400: oklch(0.372 0.044 257.287);
+  --color-slate-300: oklch(0.279 0.041 260.031);
+  --color-slate-200: oklch(0.208 0.042 265.755);
+  --color-slate-100: oklch(0.129 0.042 264.695);
+  --color-slate-50:  oklch(0.098 0.031 265.0);
+  /* "white" text → near-black in light mode */
+  --color-white: oklch(0.129 0.042 264.695);
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Keep original dark palette for dark mode (Tailwind defaults are fine) */
+.dark {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1e293b; }
+.dark ::-webkit-scrollbar-track { background: #1e293b; }
+html:not(.dark) ::-webkit-scrollbar-track { background: #e2e8f0; }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #64748b; }
