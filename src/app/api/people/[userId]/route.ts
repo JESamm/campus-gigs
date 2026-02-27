@@ -36,7 +36,7 @@ export async function GET(req: NextRequest, { params }: Params) {
           title: true,
           category: true,
           status: true,
-          skills: true,
+          skillsNeeded: true,
           visibility: true,
           createdAt: true,
           _count: { select: { members: true } },
@@ -58,16 +58,29 @@ export async function GET(req: NextRequest, { params }: Params) {
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   // Remap field names to match what the client page expects
-  const { postedGigs, createdProjects, _count, ...rest } = user;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const u = user as any;
   return NextResponse.json({
     user: {
-      ...rest,
-      gigs: postedGigs,
-      projects: createdProjects,
+      id: u.id,
+      name: u.name,
+      bio: u.bio,
+      avatar: u.avatar,
+      skills: u.skills,
+      university: u.university,
+      major: u.major,
+      yearsOfStudy: u.yearsOfStudy,
+      githubUrl: u.githubUrl,
+      websiteUrl: u.websiteUrl,
+      linkedinUrl: u.linkedinUrl,
+      twitterUrl: u.twitterUrl,
+      createdAt: u.createdAt,
+      gigs: u.postedGigs,
+      projects: u.createdProjects.map((p: any) => ({ ...p, skills: p.skillsNeeded })),
       _count: {
-        postedGigs: _count.postedGigs,
-        createdProjects: _count.createdProjects,
-        applications: _count.gigApplications,
+        postedGigs: u._count.postedGigs,
+        createdProjects: u._count.createdProjects,
+        applications: u._count.gigApplications,
       },
     },
   });
