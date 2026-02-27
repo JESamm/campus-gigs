@@ -18,6 +18,7 @@ model User {
   university   String?
   major        String?
   yearsOfStudy String?
+  profileVisibility String @default("public") // "public" | "private"
   // Social / external links
   githubUrl    String?
   websiteUrl   String?

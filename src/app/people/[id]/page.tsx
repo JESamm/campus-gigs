@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { User, MessageSquare, Briefcase, Rocket } from "lucide-react";
+import { User, MessageSquare, Briefcase, Rocket, Lock } from "lucide-react";
 
 interface PublicUser {
   id: string;
@@ -43,11 +43,16 @@ export default function PersonProfilePage() {
   const [user, setUser] = useState<PublicUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     fetch(`/api/people/${id}`)
-      .then((r) => { if (r.status === 404) { setNotFound(true); return null; } return r.json(); })
+      .then(async (r) => {
+        if (r.status === 404) { setNotFound(true); return null; }
+        if (r.status === 403) { setIsPrivate(true); return null; }
+        return r.json();
+      })
       .then((d) => {
         if (d && d.user) {
           const u = d.user;
@@ -74,6 +79,17 @@ export default function PersonProfilePage() {
     <div className="min-h-screen bg-slate-950"><Navbar />
       <div className="max-w-4xl mx-auto px-4 py-16 animate-pulse space-y-4">
         <div className="flex gap-5"><div className="w-20 h-20 rounded-full bg-slate-700"/><div className="flex-1 space-y-3 pt-2"><div className="h-6 bg-slate-700 rounded w-48"/><div className="h-4 bg-slate-700 rounded w-64"/></div></div>
+      </div>
+    </div>
+  );
+
+  if (isPrivate) return (
+    <div className="min-h-screen bg-slate-950"><Navbar />
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mb-4 mx-auto"><Lock className="w-8 h-8 text-slate-400" /></div>
+        <h1 className="text-white text-2xl font-bold mb-2">Private Profile</h1>
+        <p className="text-slate-400 mb-6">This user has set their profile to private. You can only view it if you share a project team or if they applied to one of your gigs.</p>
+        <Link href="/people" className="px-5 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-colors">Browse Community</Link>
       </div>
     </div>
   );

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 type Params = { params: Promise<{ userId: string }> };
 
-// GET /api/people/[userId] — public profile
+// GET /api/people/[userId] — public profile (respects privacy setting)
 export async function GET(req: NextRequest, { params }: Params) {
+  const session = await getServerSession(authOptions);
+  const viewerId = session?.user?.id;
   const { userId } = await params;
 
   const user = await prisma.user.findUnique({
@@ -23,6 +27,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       linkedinUrl: true,
       twitterUrl: true,
       createdAt: true,
+      profileVisibility: true,
       postedGigs: {
         where: { status: "open" },
         select: { id: true, title: true, category: true, budget: true, createdAt: true },
@@ -56,6 +61,41 @@ export async function GET(req: NextRequest, { params }: Params) {
   });
 
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+  // Privacy gate: if profile is private, only allow:
+  // 1. The user themselves  2. Team collaborators  3. Gig posters whose gig the user applied to
+  if (user.profileVisibility === "private" && viewerId !== userId) {
+    let allowed = false;
+
+    if (viewerId) {
+      // Check if viewer shares a project team with this user
+      const sharedProject = await prisma.projectMember.findFirst({
+        where: {
+          userId: viewerId,
+          project: { members: { some: { userId } } },
+        },
+      });
+      if (sharedProject) allowed = true;
+
+      // Check if viewer posted a gig this user applied to
+      if (!allowed) {
+        const gigConnection = await prisma.gigApplication.findFirst({
+          where: {
+            applicantId: userId,
+            gig: { posterId: viewerId },
+          },
+        });
+        if (gigConnection) allowed = true;
+      }
+    }
+
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "private", message: "This profile is private." },
+        { status: 403 }
+      );
+    }
+  }
 
   // Remap field names to match what the client page expects
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

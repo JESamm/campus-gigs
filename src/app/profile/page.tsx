@@ -7,7 +7,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Avatar from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Camera } from "lucide-react";
+import { CheckCircle2, Camera, Globe, Lock } from "lucide-react";
 
 interface ProfileData {
   id: string;
@@ -19,6 +19,7 @@ interface ProfileData {
   yearsOfStudy: string;
   skills: string[];
   avatar?: string;
+  profileVisibility?: string;
   githubUrl?: string;
   websiteUrl?: string;
   linkedinUrl?: string;
@@ -56,6 +57,7 @@ export default function ProfilePage() {
 
   // Avatar upload
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [visibilitySaving, setVisibilitySaving] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -167,6 +169,25 @@ export default function ProfilePage() {
     }
   };
 
+  const handleVisibilityToggle = async () => {
+    if (!profile || visibilitySaving) return;
+    const next = profile.profileVisibility === "private" ? "public" : "private";
+    setVisibilitySaving(true);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileVisibility: next }),
+      });
+      if (!res.ok) throw new Error();
+      setProfile((prev) => prev ? { ...prev, profileVisibility: next } : prev);
+    } catch {
+      alert("Could not update profile visibility.");
+    } finally {
+      setVisibilitySaving(false);
+    }
+  };
+
   if (status === "loading" || isLoading) {
     return (
       <div className="min-h-screen bg-slate-950">
@@ -234,13 +255,30 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Edit toggle */}
-            <Button
-              variant={isEditing ? "outline" : "default"}
-              onClick={() => { setIsEditing(!isEditing); setSaveSuccess(false); setSaveError(""); }}
-            >
-              {isEditing ? "Cancel" : "Edit Profile"}
-            </Button>
+            {/* Edit toggle + Visibility */}
+            <div className="flex flex-col gap-2 sm:items-end">
+              <button
+                onClick={handleVisibilityToggle}
+                disabled={visibilitySaving}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  profile.profileVisibility === "private"
+                    ? "bg-amber-900/30 border-amber-700 text-amber-300 hover:bg-amber-900/50"
+                    : "bg-emerald-900/30 border-emerald-700 text-emerald-300 hover:bg-emerald-900/50"
+                }`}
+              >
+                {profile.profileVisibility === "private" ? (
+                  <><Lock className="w-3.5 h-3.5" /> Private Profile</>
+                ) : (
+                  <><Globe className="w-3.5 h-3.5" /> Public Profile</>
+                )}
+              </button>
+              <Button
+                variant={isEditing ? "outline" : "default"}
+                onClick={() => { setIsEditing(!isEditing); setSaveSuccess(false); setSaveError(""); }}
+              >
+                {isEditing ? "Cancel" : "Edit Profile"}
+              </Button>
+            </div>
           </div>
 
           {/* Stats row */}

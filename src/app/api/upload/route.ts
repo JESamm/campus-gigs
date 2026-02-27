@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { v2 as cloudinary } from "cloudinary";
 
+// Force Node.js runtime for Cloudinary SDK
+export const runtime = "nodejs";
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -29,7 +32,7 @@ const ALLOWED_TYPES = [
   "audio/wav",
 ];
 
-const MAX_SIZE = 20 * 1024 * 1024; // 20 MB
+const MAX_SIZE = 4.5 * 1024 * 1024; // 4.5 MB (Vercel serverless limit)
 
 // POST /api/upload — uploads a file to Cloudinary, returns { url, publicId }
 export async function POST(request: NextRequest) {
@@ -51,11 +54,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: "File too large (max 20 MB)" }, { status: 400 });
+      return NextResponse.json({ error: "File too large (max 4.5 MB)" }, { status: 400 });
     }
 
+    // Convert to base64 data URI — more reliable than streams on Vercel serverless
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const base64 = Buffer.from(bytes).toString("base64");
+    const dataUri = `data:${file.type};base64,${base64}`;
 
     // Determine resource type for Cloudinary
     const resourceType: "image" | "video" | "raw" = file.type.startsWith("image/")
@@ -64,25 +69,13 @@ export async function POST(request: NextRequest) {
       ? "video"
       : "raw";
 
-    // Upload to Cloudinary via upload_stream
-    const result = await new Promise<{ secure_url: string; public_id: string }>(
-      (resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            {
-              folder: "campus-gigs",
-              resource_type: resourceType,
-              use_filename: true,
-              unique_filename: true,
-            },
-            (error, result) => {
-              if (error || !result) reject(error ?? new Error("Upload failed"));
-              else resolve(result as { secure_url: string; public_id: string });
-            }
-          )
-          .end(buffer);
-      }
-    );
+    // Upload using base64 (no streams — works reliably on serverless)
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder: "campus-gigs",
+      resource_type: resourceType,
+      use_filename: true,
+      unique_filename: true,
+    });
 
     return NextResponse.json(
       { url: result.secure_url, publicId: result.public_id },

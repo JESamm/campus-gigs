@@ -1,24 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/people?page=1&limit=20&search=&skill=
 export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions);
   const { searchParams } = new URL(req.url);
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
   const limit = Math.min(50, parseInt(searchParams.get("limit") ?? "20"));
   const search = searchParams.get("search")?.trim() ?? "";
   const skill = searchParams.get("skill")?.trim() ?? "";
 
-  const where: Record<string, unknown> = {};
+  // Build filter: only show public profiles (+ the logged-in user's own profile)
+  const visibilityFilter: Record<string, unknown>[] = [
+    { profileVisibility: "public" },
+  ];
+  if (session?.user?.id) {
+    visibilityFilter.push({ id: session.user.id });
+  }
+
+  const where: Record<string, unknown> = {
+    OR: visibilityFilter,
+  };
+
+  // Layer on search / skill filters using AND
+  const andConditions: Record<string, unknown>[] = [];
   if (search) {
-    where.OR = [
-      { name: { contains: search } },
-      { university: { contains: search } },
-      { major: { contains: search } },
-    ];
+    andConditions.push({
+      OR: [
+        { name: { contains: search } },
+        { university: { contains: search } },
+        { major: { contains: search } },
+      ],
+    });
   }
   if (skill) {
-    where.skills = { contains: skill };
+    andConditions.push({ skills: { contains: skill } });
+  }
+  if (andConditions.length > 0) {
+    where.AND = andConditions;
   }
 
   const [users, total] = await Promise.all([
@@ -54,3 +75,4 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ users, total, page, limit, pages: Math.ceil(total / limit) });
 }
+
