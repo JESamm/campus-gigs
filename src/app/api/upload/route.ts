@@ -65,11 +65,18 @@ export async function POST(request: NextRequest) {
       : "raw";
 
     // Upload using base64 (no streams — works reliably on serverless)
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      return NextResponse.json(
+        { error: `Cloudinary env vars missing: name=${!!cloudName} key=${!!apiKey} secret=${!!apiSecret}` },
+        { status: 500 }
+      );
+    }
+
+    cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
 
     const result = await cloudinary.uploader.upload(dataUri, {
       folder: "campus-gigs",
@@ -82,9 +89,16 @@ export async function POST(request: NextRequest) {
       { url: result.secure_url, publicId: result.public_id },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error uploading to Cloudinary:", error);
-    const message = error instanceof Error ? error.message : "Failed to upload file";
+    // Cloudinary errors are plain objects, not Error instances
+    let message = "Upload failed";
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "object" && error !== null) {
+      const e = error as Record<string, unknown>;
+      message = (e.message as string) || (e.error as Record<string, unknown>)?.message as string || JSON.stringify(error);
+    }
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
