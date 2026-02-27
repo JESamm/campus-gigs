@@ -5,8 +5,9 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import Avatar from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Camera } from "lucide-react";
 
 interface ProfileData {
   id: string;
@@ -156,6 +157,8 @@ export default function ProfilePage() {
         body: JSON.stringify({ avatar: url }),
       });
       setProfile((prev) => prev ? { ...prev, avatar: url } : prev);
+      // Refresh session so Navbar avatar updates
+      await update();
     } catch (err) {
       console.error(err);
       alert("Avatar upload failed.");
@@ -195,23 +198,22 @@ export default function ProfilePage() {
         {/* Profile Header */}
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-6">
           <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-            {/* Avatar */}
-            <div className="relative group shrink-0">
-              <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
-                {profile.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatar} alt="avatar" className="w-full h-full object-cover" />
-                ) : (
-                  profile.name?.charAt(0).toUpperCase()
-                )}
-              </div>
-              <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity">
-                <span className="text-white text-xs text-center">
-                  {avatarUploading ? "..." : "Change"}
-                </span>
+            {/* Avatar with upload */}
+            <div className="flex flex-col items-center gap-2">
+              <Avatar
+                src={profile.avatar}
+                name={profile.name}
+                size={20}
+                editable
+                uploading={avatarUploading}
+                onUpload={handleAvatarUpload}
+              />
+              <label className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 cursor-pointer transition-colors">
+                <Camera className="w-3.5 h-3.5" />
+                {avatarUploading ? "Uploading..." : profile.avatar ? "Change photo" : "Add photo"}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   className="hidden"
                   onChange={handleAvatarUpload}
                   disabled={avatarUploading}

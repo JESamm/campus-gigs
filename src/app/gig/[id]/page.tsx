@@ -25,6 +25,7 @@ interface GigDetail {
     university?: string;
     major?: string;
     bio?: string;
+    avatar?: string;
   };
   applications: {
     id: string;
@@ -272,8 +273,13 @@ export default function GigDetailPage() {
                       {/* Top row: avatar, name, rating, status */}
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <Link href={`/people/${app.applicant.id}`} className="flex items-center gap-3 group">
-                          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                            {app.applicant.name.charAt(0).toUpperCase()}
+                          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden">
+                            {app.applicant.avatar ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={app.applicant.avatar} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              app.applicant.name.charAt(0).toUpperCase()
+                            )}
                           </div>
                           <div>
                             <span className="font-medium text-white group-hover:text-blue-400 transition-colors">{app.applicant.name}</span>
@@ -428,8 +434,13 @@ export default function GigDetailPage() {
                 Posted by
               </h3>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
-                  {gig.poster.name.charAt(0).toUpperCase()}
+                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold overflow-hidden">
+                  {gig.poster.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={gig.poster.avatar} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    gig.poster.name.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div>
                   <div className="text-white font-medium">{gig.poster.name}</div>

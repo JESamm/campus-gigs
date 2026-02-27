@@ -214,8 +214,13 @@ export default function Navbar() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 pl-3 border-l border-slate-700">
-                  <Link href="/profile" className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold text-white hover:bg-blue-500 transition-colors" title="My Profile">
-                    {session.user?.name?.charAt(0).toUpperCase()}
+                  <Link href="/profile" className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold text-white hover:bg-blue-500 transition-colors overflow-hidden ring-2 ring-slate-700" title="My Profile">
+                    {session.user?.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={session.user.image} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      session.user?.name?.charAt(0).toUpperCase()
+                    )}
                   </Link>
                   <button
                     onClick={handleSignOut}

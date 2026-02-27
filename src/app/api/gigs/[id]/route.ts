@@ -12,7 +12,7 @@ export async function GET(
     const gig = await prisma.gig.findUnique({
       where: { id },
       include: {
-        poster: { select: { id: true, name: true, university: true, major: true, bio: true } },
+        poster: { select: { id: true, name: true, university: true, major: true, bio: true, avatar: true } },
         applications: {
           include: {
             applicant: {

@@ -18,6 +18,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
+          select: { id: true, email: true, name: true, password: true, avatar: true },
         });
 
         if (!user) {
@@ -37,6 +38,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
+          image: user.avatar,
         };
       },
     }),
@@ -45,15 +47,25 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
+        token.picture = user.image ?? null;
+      }
+      // Refresh avatar from DB when session is updated
+      if (trigger === "update") {
+        const dbUser = await prisma.user.findUnique({ where: { id: token.id as string }, select: { avatar: true, name: true } });
+        if (dbUser) {
+          token.picture = dbUser.avatar;
+          token.name = dbUser.name;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.image = token.picture as string | null;
       }
       return session;
     },
