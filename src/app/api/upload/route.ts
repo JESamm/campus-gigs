@@ -65,18 +65,22 @@ export async function POST(request: NextRequest) {
       : "raw";
 
     // Upload using base64 (no streams — works reliably on serverless)
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-    if (!cloudName || !apiKey || !apiSecret) {
-      return NextResponse.json(
-        { error: `Cloudinary env vars missing: name=${!!cloudName} key=${!!apiKey} secret=${!!apiSecret}` },
-        { status: 500 }
-      );
+    // Cloudinary SDK auto-reads CLOUDINARY_URL env var, but we also support individual vars
+    const cloudUrl = process.env.CLOUDINARY_URL;
+    if (cloudUrl) {
+      cloudinary.config({ cloudinary_url: cloudUrl });
+    } else {
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+      const apiKey = process.env.CLOUDINARY_API_KEY;
+      const apiSecret = process.env.CLOUDINARY_API_SECRET;
+      if (!cloudName || !apiKey || !apiSecret) {
+        return NextResponse.json(
+          { error: "Cloudinary not configured" },
+          { status: 500 }
+        );
+      }
+      cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
     }
-
-    cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
 
     const result = await cloudinary.uploader.upload(dataUri, {
       folder: "campus-gigs",
