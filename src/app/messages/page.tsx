@@ -33,11 +33,17 @@ function MessagesContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialPartnerId = searchParams.get("with");
+  // Support both ?with= (existing conversation) and ?to= (new message from profile)
+  const initialPartnerId = searchParams.get("with") || searchParams.get("to");
+  const initialPartnerName = searchParams.get("name");
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activePartnerId, setActivePartnerId] = useState<string | null>(initialPartnerId);
-  const [activePartner, setActivePartner] = useState<UserSummary | null>(null);
+  const [activePartner, setActivePartner] = useState<UserSummary | null>(
+    initialPartnerId && initialPartnerName
+      ? { id: initialPartnerId, name: initialPartnerName, avatar: null }
+      : null
+  );
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -94,9 +100,19 @@ function MessagesContent() {
       }
     };
 
-    // Find partner info from conversations
+    // Find partner info from conversations or keep existing (from URL params)
     const convo = conversations.find((c) => c.partnerId === activePartnerId);
-    if (convo) setActivePartner(convo.partner);
+    if (convo) {
+      setActivePartner(convo.partner);
+    } else if (!activePartner && activePartnerId) {
+      // New conversation — fetch partner info
+      fetch(`/api/people/${activePartnerId}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((d) => {
+          if (d?.user) setActivePartner({ id: d.user.id, name: d.user.name, avatar: d.user.avatar });
+        })
+        .catch(() => {});
+    }
 
     fetchThread();
     // eslint-disable-next-line react-hooks/exhaustive-deps
