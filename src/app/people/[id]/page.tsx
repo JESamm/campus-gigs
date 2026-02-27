@@ -49,14 +49,18 @@ export default function PersonProfilePage() {
       .then((r) => { if (r.status === 404) { setNotFound(true); return null; } return r.json(); })
       .then((d) => {
         if (d && d.user) {
+          const u = d.user;
           setUser({
-            ...d.user,
-            gigs: d.user.gigs ?? [],
-            projects: d.user.projects ?? [],
+            ...u,
+            gigs: u.gigs ?? u.postedGigs ?? [],
+            projects: (u.projects ?? u.createdProjects ?? []).map((p: any) => ({
+              ...p,
+              skills: p.skills ?? p.skillsNeeded ?? "[]",
+            })),
             _count: {
-              postedGigs: d.user._count?.postedGigs ?? 0,
-              createdProjects: d.user._count?.createdProjects ?? 0,
-              applications: d.user._count?.applications ?? 0,
+              postedGigs: u._count?.postedGigs ?? 0,
+              createdProjects: u._count?.createdProjects ?? 0,
+              applications: u._count?.applications ?? u._count?.gigApplications ?? 0,
             },
           });
         }
