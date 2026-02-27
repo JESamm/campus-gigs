@@ -15,7 +15,18 @@ export async function GET(
         poster: { select: { id: true, name: true, university: true, major: true, bio: true } },
         applications: {
           include: {
-            applicant: { select: { id: true, name: true, university: true } },
+            applicant: {
+              select: {
+                id: true,
+                name: true,
+                university: true,
+                avatar: true,
+                skills: true,
+                reviewsReceived: {
+                  select: { score: true },
+                },
+              },
+            },
           },
           orderBy: { appliedAt: "desc" },
         },
@@ -25,13 +36,31 @@ export async function GET(
 
     if (!gig) return NextResponse.json({ error: "Gig not found" }, { status: 404 });
 
-    return NextResponse.json({
-      gig: {
-        ...gig,
-        skillsNeeded: JSON.parse(gig.skillsNeeded || "[]"),
-        attachments: JSON.parse(gig.attachments || "[]"),
-      },
-    });
+    // Compute average rating for each applicant
+    const gigWithRatings = {
+      ...gig,
+      skillsNeeded: JSON.parse(gig.skillsNeeded || "[]"),
+      attachments: JSON.parse(gig.attachments || "[]"),
+      applications: gig.applications.map((app) => {
+        const reviews = app.applicant.reviewsReceived;
+        const ratingCount = reviews.length;
+        const ratingAvg = ratingCount
+          ? Math.round((reviews.reduce((s, r) => s + r.score, 0) / ratingCount) * 10) / 10
+          : 0;
+        return {
+          ...app,
+          applicant: {
+            ...app.applicant,
+            skills: JSON.parse(app.applicant.skills || "[]"),
+            ratingAvg,
+            ratingCount,
+            reviewsReceived: undefined,
+          },
+        };
+      }),
+    };
+
+    return NextResponse.json({ gig: gigWithRatings });
   } catch (err) {
     console.error("GET /api/gigs/[id]:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -5,7 +5,17 @@ import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Bell, Sun, Moon, Users, MessageSquare, Briefcase, ExternalLink } from "lucide-react";
+
+interface NotificationItem {
+  id: string;
+  message: string;
+  type: string;
+  read: boolean;
+  createdAt: string;
+  gigId?: string | null;
+  projectId?: string | null;
+}
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -13,7 +23,7 @@ export default function Navbar() {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<{ id: string; message: string; read: boolean; createdAt: string }[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -163,16 +173,41 @@ export default function Navbar() {
                         <span className="text-sm font-semibold text-white">Notifications</span>
                         <button onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-white text-xs">✕</button>
                       </div>
-                      <div className="max-h-72 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="px-4 py-6 text-center text-slate-500 text-sm">No notifications yet</div>
                         ) : (
-                          notifications.map((n) => (
-                            <div key={n.id} className={`px-4 py-3 border-b border-slate-700/50 text-sm ${n.read ? "text-slate-400" : "text-white bg-slate-700/30"}`}>
-                              <p>{n.message}</p>
-                              <p className="text-xs text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
-                            </div>
-                          ))
+                          notifications.map((n) => {
+                            // Determine link based on notification type
+                            const getLink = () => {
+                              if (n.type === "gig_application" || n.type === "application_accepted" || n.type === "application_rejected" || n.type === "rating_received") {
+                                return n.gigId ? `/gig/${n.gigId}` : null;
+                              }
+                              if (n.type === "message") return "/messages";
+                              if (n.type === "project_join" && n.projectId) return `/project/${n.projectId}`;
+                              return n.gigId ? `/gig/${n.gigId}` : n.projectId ? `/project/${n.projectId}` : null;
+                            };
+                            const link = getLink();
+                            const content = (
+                              <>
+                                <p className="text-sm leading-snug">{n.message}</p>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                  <p className="text-xs text-slate-500">{new Date(n.createdAt).toLocaleString()}</p>
+                                  {link && <ExternalLink className="w-3 h-3 text-slate-500" />}
+                                </div>
+                              </>
+                            );
+                            const className = `block px-4 py-3 border-b border-slate-700/50 ${n.read ? "text-slate-400" : "text-white bg-slate-700/30"} ${link ? "hover:bg-slate-700/50 cursor-pointer transition-colors" : ""}`;
+                            return link ? (
+                              <Link key={n.id} href={link} onClick={() => setShowNotifications(false)} className={className}>
+                                {content}
+                              </Link>
+                            ) : (
+                              <div key={n.id} className={className}>
+                                {content}
+                              </div>
+                            );
+                          })
                         )}
                       </div>
                     </div>
@@ -222,34 +257,60 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden border-t border-slate-800 py-4 space-y-3">
-            <Link href="/gigs" className="block text-slate-300 hover:text-white py-2 text-sm" onClick={() => setMenuOpen(false)}>
-              Browse Gigs
+          <div className="md:hidden border-t border-slate-800 py-4 space-y-1">
+            <Link href="/gigs" className="flex items-center gap-2 text-slate-300 hover:text-white py-2.5 px-2 rounded-lg hover:bg-slate-800/50 text-sm transition-colors" onClick={() => setMenuOpen(false)}>
+              <Briefcase className="w-4 h-4" /> Browse Gigs
             </Link>
-            <Link href="/projects" className="block text-slate-300 hover:text-white py-2 text-sm" onClick={() => setMenuOpen(false)}>
-              Projects
+            <Link href="/projects" className="flex items-center gap-2 text-slate-300 hover:text-white py-2.5 px-2 rounded-lg hover:bg-slate-800/50 text-sm transition-colors" onClick={() => setMenuOpen(false)}>
+              <ExternalLink className="w-4 h-4" /> Projects
+            </Link>
+            <Link href="/people" className="flex items-center gap-2 text-slate-300 hover:text-white py-2.5 px-2 rounded-lg hover:bg-slate-800/50 text-sm transition-colors" onClick={() => setMenuOpen(false)}>
+              <Users className="w-4 h-4" /> People
             </Link>
             {session ? (
               <>
-                <Link href="/messages" className="flex items-center gap-2 text-slate-300 hover:text-white py-2 text-sm" onClick={() => setMenuOpen(false)}>
-                  Messages
-                  {unreadMessages > 0 && <span className="bg-rose-600 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">{unreadMessages}</span>}
+                <Link href="/messages" className="flex items-center gap-2 text-slate-300 hover:text-white py-2.5 px-2 rounded-lg hover:bg-slate-800/50 text-sm transition-colors" onClick={() => setMenuOpen(false)}>
+                  <MessageSquare className="w-4 h-4" /> Messages
+                  {unreadMessages > 0 && <span className="bg-rose-600 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center ml-auto">{unreadMessages}</span>}
                 </Link>
-                <Link href="/dashboard" className="block text-slate-300 hover:text-white py-2 text-sm" onClick={() => setMenuOpen(false)}>
+                <Link href="/dashboard" className="flex items-center gap-2 text-slate-300 hover:text-white py-2.5 px-2 rounded-lg hover:bg-slate-800/50 text-sm transition-colors" onClick={() => setMenuOpen(false)}>
                   Dashboard
                 </Link>
-                <Link href="/profile" className="block text-slate-300 hover:text-white py-2 text-sm" onClick={() => setMenuOpen(false)}>
+                <Link href="/profile" className="flex items-center gap-2 text-slate-300 hover:text-white py-2.5 px-2 rounded-lg hover:bg-slate-800/50 text-sm transition-colors" onClick={() => setMenuOpen(false)}>
                   My Profile
                 </Link>
-                <Link href="/post-gig" className="block text-slate-300 hover:text-white py-2 text-sm" onClick={() => setMenuOpen(false)}>
+                <Link href="/post-gig" className="flex items-center gap-2 text-slate-300 hover:text-white py-2.5 px-2 rounded-lg hover:bg-slate-800/50 text-sm transition-colors" onClick={() => setMenuOpen(false)}>
                   Post a Gig
                 </Link>
-                <button onClick={handleSignOut} className="block text-slate-400 hover:text-white py-2 text-sm">
-                  Sign out
+
+                {/* Mobile notification bell */}
+                <button
+                  onClick={() => { openNotifications(); }}
+                  className="flex items-center gap-2 text-slate-300 hover:text-white py-2.5 px-2 rounded-lg hover:bg-slate-800/50 text-sm transition-colors w-full text-left"
+                >
+                  <Bell className="w-4 h-4" /> Notifications
+                  {unreadNotifications > 0 && <span className="bg-rose-600 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center ml-auto">{unreadNotifications}</span>}
                 </button>
+
+                {/* Mobile theme toggle */}
+                {mounted && (
+                  <button
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    className="flex items-center gap-2 text-slate-300 hover:text-white py-2.5 px-2 rounded-lg hover:bg-slate-800/50 text-sm transition-colors w-full text-left"
+                  >
+                    {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                  </button>
+                )}
+
+                <div className="pt-2 border-t border-slate-800">
+                  <button onClick={() => { handleSignOut(); setMenuOpen(false); }} className="flex items-center gap-2 text-slate-400 hover:text-white py-2.5 px-2 rounded-lg hover:bg-slate-800/50 text-sm transition-colors w-full text-left">
+                    Sign out
+                  </button>
+                </div>
               </>
             ) : (
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-3 px-2">
                 <Link href="/login" onClick={() => setMenuOpen(false)}>
                   <Button variant="outline" size="sm">Log in</Button>
                 </Link>

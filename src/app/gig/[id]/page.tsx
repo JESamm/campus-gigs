@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { Paperclip, CheckCircle2 } from "lucide-react";
+import { Paperclip, CheckCircle2, Star, MessageSquare, ThumbsUp, ThumbsDown, User } from "lucide-react";
 
 interface GigDetail {
   id: string;
@@ -35,6 +35,10 @@ interface GigDetail {
       id: string;
       name: string;
       university?: string;
+      avatar?: string;
+      skills: string[];
+      ratingAvg: number;
+      ratingCount: number;
     };
   }[];
   _count: { applications: number };
@@ -59,6 +63,9 @@ export default function GigDetailPage() {
 
   // Delete state (for gig owner)
   const [deleting, setDeleting] = useState(false);
+
+  // Accept/reject state
+  const [actioningApp, setActioningApp] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchGig = async () => {
@@ -109,6 +116,26 @@ export default function GigDetailPage() {
       setApplyError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setApplying(false);
+    }
+  };
+
+  const handleApplicationAction = async (applicationId: string, action: "accepted" | "rejected") => {
+    setActioningApp(applicationId);
+    try {
+      const res = await fetch("/api/gigs/apply/accept", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ applicationId, action }),
+      });
+      if (res.ok) {
+        // Refresh gig data
+        const data = await fetch(`/api/gigs/${id}`).then(r => r.json());
+        setGig(data.gig);
+      }
+    } catch {
+      // silent
+    } finally {
+      setActioningApp(null);
     }
   };
 
@@ -232,48 +259,106 @@ export default function GigDetailPage() {
             {/* Applications (owner only) */}
             {isOwner && gig.applications.length > 0 && (
               <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">
-                  Applications ({gig._count.applications})
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-400" />
+                  Applicants ({gig._count.applications})
                 </h2>
                 <div className="space-y-4">
                   {gig.applications.map((app) => (
                     <div
                       key={app.id}
-                      className="bg-slate-700/50 border border-slate-600 rounded-lg p-4"
+                      className="bg-slate-700/30 border border-slate-600 rounded-xl p-5 hover:border-slate-500 transition-colors"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <span className="font-medium text-white">{app.applicant.name}</span>
-                          {app.applicant.university && (
-                            <span className="text-slate-400 text-sm ml-2">
-                              — {app.applicant.university}
+                      {/* Top row: avatar, name, rating, status */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <Link href={`/people/${app.applicant.id}`} className="flex items-center gap-3 group">
+                          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                            {app.applicant.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <span className="font-medium text-white group-hover:text-blue-400 transition-colors">{app.applicant.name}</span>
+                            {app.applicant.university && (
+                              <p className="text-slate-500 text-xs">{app.applicant.university}</p>
+                            )}
+                          </div>
+                        </Link>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {/* Star rating */}
+                          <div className="flex items-center gap-1" title={`${app.applicant.ratingAvg}/5 from ${app.applicant.ratingCount} reviews`}>
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                className={`w-3.5 h-3.5 ${s <= Math.round(app.applicant.ratingAvg) ? "text-amber-400 fill-amber-400" : "text-slate-600"}`}
+                              />
+                            ))}
+                            <span className="text-xs text-slate-400 ml-1">
+                              {app.applicant.ratingCount > 0 ? `${app.applicant.ratingAvg}` : "New"}
                             </span>
-                          )}
-                        </div>
-                        <div className="flex gap-2 items-center">
+                          </div>
                           <span
-                            className={`text-xs px-2 py-1 rounded-full ${
+                            className={`text-xs px-2 py-1 rounded-full font-medium ${
                               app.status === "accepted"
-                                ? "bg-emerald-900/40 text-emerald-300"
+                                ? "bg-emerald-900/40 text-emerald-300 border border-emerald-700"
                                 : app.status === "rejected"
-                                ? "bg-red-900/40 text-red-300"
-                                : "bg-slate-600 text-slate-300"
+                                ? "bg-red-900/40 text-red-300 border border-red-700"
+                                : "bg-slate-600/50 text-slate-300 border border-slate-500"
                             }`}
                           >
                             {app.status}
                           </span>
-                          <Link href={`/messages?with=${app.applicant.id}`}>
-                            <Button size="sm" variant="outline">
-                              Message
-                            </Button>
-                          </Link>
                         </div>
                       </div>
+
+                      {/* Skills */}
+                      {app.applicant.skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          {app.applicant.skills.slice(0, 5).map((skill: string) => (
+                            <span key={skill} className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">{skill}</span>
+                          ))}
+                          {app.applicant.skills.length > 5 && <span className="text-xs text-slate-500">+{app.applicant.skills.length - 5}</span>}
+                        </div>
+                      )}
+
+                      {/* Cover letter */}
                       {app.coverLetter && (
-                        <p className="text-slate-400 text-sm mt-2 whitespace-pre-wrap">
+                        <p className="text-slate-400 text-sm whitespace-pre-wrap mb-3 bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
                           {app.coverLetter}
                         </p>
                       )}
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-slate-700/50">
+                        <span className="text-xs text-slate-500 mr-auto">
+                          Applied {new Date(app.appliedAt).toLocaleDateString()}
+                        </span>
+                        {app.status === "pending" && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-emerald-400 border-emerald-700 hover:bg-emerald-900/30"
+                              disabled={actioningApp === app.id}
+                              onClick={() => handleApplicationAction(app.id, "accepted")}
+                            >
+                              <ThumbsUp className="w-3.5 h-3.5 mr-1" /> Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-400 border-red-700 hover:bg-red-900/30"
+                              disabled={actioningApp === app.id}
+                              onClick={() => handleApplicationAction(app.id, "rejected")}
+                            >
+                              <ThumbsDown className="w-3.5 h-3.5 mr-1" /> Reject
+                            </Button>
+                          </>
+                        )}
+                        <Link href={`/messages?to=${app.applicant.id}&name=${encodeURIComponent(app.applicant.name)}`}>
+                          <Button size="sm" variant="outline">
+                            <MessageSquare className="w-3.5 h-3.5 mr-1" /> Chat
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   ))}
                 </div>

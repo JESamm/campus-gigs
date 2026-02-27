@@ -37,6 +37,8 @@ model User {
   projectDiscussions   ProjectDiscussion[]
   discussionReplies    DiscussionReply[]
   uploadedFiles        ProjectFile[]
+  reviewsGiven         Rating[]              @relation("ReviewsGiven")
+  reviewsReceived      Rating[]              @relation("ReviewsReceived")
 
   @@index([email])
 }
@@ -60,6 +62,7 @@ model Gig {
   applications  GigApplication[]
   messages      Message[]        @relation("GigMessages")
   notifications Notification[]
+  ratings        Rating[]
 
   @@index([posterId])
   @@index([status])
@@ -222,4 +225,25 @@ model DiscussionReply {
 
   @@index([discussionId])
   @@index([authorId])
+}
+
+// ─── Rating / Review System ──────────────────────────────────────────────────
+
+model Rating {
+  id        String   @id @default(cuid())
+  score     Int               // 1–5 stars
+  comment   String?
+  createdAt DateTime @default(now())
+
+  gigId      String
+  gig        Gig    @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   User   @relation("ReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
+  revieweeId String
+  reviewee   User   @relation("ReviewsReceived", fields: [revieweeId], references: [id], onDelete: Cascade)
+
+  @@unique([gigId, reviewerId, revieweeId])
+  @@index([revieweeId])
+  @@index([reviewerId])
+  @@index([gigId])
 }
