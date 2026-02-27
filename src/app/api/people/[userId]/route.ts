@@ -36,6 +36,7 @@ export async function GET(req: NextRequest, { params }: Params) {
           title: true,
           category: true,
           status: true,
+          skills: true,
           visibility: true,
           createdAt: true,
           _count: { select: { members: true } },
@@ -55,5 +56,19 @@ export async function GET(req: NextRequest, { params }: Params) {
   });
 
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
-  return NextResponse.json({ user });
+
+  // Remap field names to match what the client page expects
+  const { postedGigs, createdProjects, _count, ...rest } = user;
+  return NextResponse.json({
+    user: {
+      ...rest,
+      gigs: postedGigs,
+      projects: createdProjects,
+      _count: {
+        postedGigs: _count.postedGigs,
+        createdProjects: _count.createdProjects,
+        applications: _count.gigApplications,
+      },
+    },
+  });
 }
