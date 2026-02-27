@@ -5,12 +5,7 @@ import { v2 as cloudinary } from "cloudinary";
 
 // Force Node.js runtime for Cloudinary SDK
 export const runtime = "nodejs";
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+export const maxDuration = 30; // allow up to 30s for upload
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -70,6 +65,12 @@ export async function POST(request: NextRequest) {
       : "raw";
 
     // Upload using base64 (no streams — works reliably on serverless)
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+
     const result = await cloudinary.uploader.upload(dataUri, {
       folder: "campus-gigs",
       resource_type: resourceType,
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error uploading to Cloudinary:", error);
-    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Failed to upload file";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

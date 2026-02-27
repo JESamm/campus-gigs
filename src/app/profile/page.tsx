@@ -150,8 +150,9 @@ export default function ProfilePage() {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("Upload failed");
-      const { url } = await res.json();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Upload failed (${res.status})`);
+      const url = data.url;
       // Save avatar URL
       await fetch("/api/user/profile", {
         method: "PATCH",
@@ -163,7 +164,7 @@ export default function ProfilePage() {
       await update();
     } catch (err) {
       console.error(err);
-      alert("Avatar upload failed.");
+      alert(err instanceof Error ? err.message : "Avatar upload failed.");
     } finally {
       setAvatarUploading(false);
     }
