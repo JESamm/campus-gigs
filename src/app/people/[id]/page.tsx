@@ -47,7 +47,20 @@ export default function PersonProfilePage() {
     if (!id) return;
     fetch(`/api/people/${id}`)
       .then((r) => { if (r.status === 404) { setNotFound(true); return null; } return r.json(); })
-      .then((d) => { if (d) setUser(d.user); })
+      .then((d) => {
+        if (d && d.user) {
+          setUser({
+            ...d.user,
+            gigs: d.user.gigs ?? [],
+            projects: d.user.projects ?? [],
+            _count: {
+              postedGigs: d.user._count?.postedGigs ?? 0,
+              createdProjects: d.user._count?.createdProjects ?? 0,
+              applications: d.user._count?.applications ?? 0,
+            },
+          });
+        }
+      })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [id]);
@@ -71,7 +84,7 @@ export default function PersonProfilePage() {
     </div>
   );
 
-  const skills: string[] = JSON.parse(user.skills || "[]");
+  const skills: string[] = (() => { try { return JSON.parse(user.skills || "[]"); } catch { return []; } })();
   const isMe = session?.user?.id === user.id;
   const joined = new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
