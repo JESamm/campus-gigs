@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import { User, MessageSquare, Briefcase, Rocket } from "lucide-react";
 
 interface PublicUser {
   id: string;
@@ -80,7 +81,7 @@ export default function PersonProfilePage() {
   if (notFound || !user) return (
     <div className="min-h-screen bg-slate-950"><Navbar />
       <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-        <p className="text-5xl mb-4">👤</p>
+        <div className="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mb-4 mx-auto"><User className="w-8 h-8 text-slate-400" /></div>
         <h1 className="text-white text-2xl font-bold mb-2">User not found</h1>
         <p className="text-slate-400 mb-6">This profile doesn&apos;t exist or has been removed.</p>
         <Link href="/people" className="px-5 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-colors">Browse Community</Link>
@@ -159,7 +160,7 @@ export default function PersonProfilePage() {
               ) : session ? (
                 <Link href={`/messages?to=${user.id}&name=${encodeURIComponent(user.name)}`}
                   className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-colors text-sm font-medium">
-                  💬 Message
+                  <MessageSquare className="w-4 h-4 inline" /> Message
                 </Link>
               ) : null}
             </div>
@@ -189,7 +190,7 @@ export default function PersonProfilePage() {
           {/* Gigs */}
           <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5">
             <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
-              <span>💼</span> Open Gigs
+              <Briefcase className="w-4 h-4" /> Open Gigs
               {user._count.postedGigs > user.gigs.length && (
                 <span className="text-slate-500 text-xs font-normal">({user.gigs.length} of {user._count.postedGigs})</span>
               )}
@@ -216,7 +217,7 @@ export default function PersonProfilePage() {
           {/* Projects */}
           <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5">
             <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
-              <span>🚀</span> Public Projects
+              <Rocket className="w-4 h-4" /> Public Projects
               {user._count.createdProjects > user.projects.length && (
                 <span className="text-slate-500 text-xs font-normal">({user.projects.length} of {user._count.createdProjects})</span>
               )}

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import { Users, Github, Globe, Briefcase } from "lucide-react";
 
 interface Person {
   id: string;
@@ -113,7 +114,7 @@ export default function PeoplePage() {
           </div>
         ) : people.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-4xl mb-4">👥</p>
+            <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mb-4 mx-auto"><Users className="w-7 h-7 text-slate-400" /></div>
             <p className="text-white font-semibold text-lg mb-2">No students found</p>
             <p className="text-slate-400 text-sm">{search ? "Try a different search term" : "Be the first to sign up!"}</p>
           </div>
@@ -151,9 +152,9 @@ export default function PeoplePage() {
                     <span>{person._count.postedGigs} gig{person._count.postedGigs !== 1 ? "s" : ""}</span>
                     <span>{person._count.createdProjects} project{person._count.createdProjects !== 1 ? "s" : ""}</span>
                     <div className="flex gap-2">
-                      {person.githubUrl && <span title="GitHub">⌨️</span>}
-                      {person.websiteUrl && <span title="Website">🌐</span>}
-                      {person.linkedinUrl && <span title="LinkedIn">💼</span>}
+                      {person.githubUrl && <span title="GitHub"><Github className="w-3.5 h-3.5" /></span>}
+                      {person.websiteUrl && <span title="Website"><Globe className="w-3.5 h-3.5" /></span>}
+                      {person.linkedinUrl && <span title="LinkedIn"><Briefcase className="w-3.5 h-3.5" /></span>}
                     </div>
                   </div>
                 </Link>

@@ -5,6 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import { GraduationCap } from "lucide-react";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -63,7 +64,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <span className="text-2xl">📚</span>
+            <GraduationCap className="w-7 h-7 text-blue-400 group-hover:text-blue-300 transition-colors" />
             <span className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
               Campus Gigs
             </span>

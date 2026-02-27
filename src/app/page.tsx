@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
+import { Search, UserPlus, Rocket, GraduationCap } from "lucide-react";
 
 interface Gig {
   id: string;
@@ -120,13 +121,13 @@ export default function Home() {
         <h2 className="text-3xl font-bold text-white text-center mb-14">How it works</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {[
-            { step: "01", icon: "🔍", title: "Browse freely", desc: "Explore every gig and project posted by students — no account required to look around." },
-            { step: "02", icon: "✍️", title: "Sign up in seconds", desc: "Create a free account with just your name and email. No credit card, no setup fees." },
-            { step: "03", icon: "🚀", title: "Apply or post", desc: "Apply for gigs that fit your skills, or post your own and find talented peers to help you." },
+            { step: "01", Icon: Search, title: "Browse freely", desc: "Explore every gig and project posted by students — no account required to look around." },
+            { step: "02", Icon: UserPlus, title: "Sign up in seconds", desc: "Create a free account with just your name and email. No credit card, no setup fees." },
+            { step: "03", Icon: Rocket, title: "Apply or post", desc: "Apply for gigs that fit your skills, or post your own and find talented peers to help you." },
           ].map((item) => (
             <div key={item.step} className="relative">
               <div className="text-6xl font-black text-slate-800 mb-4 select-none">{item.step}</div>
-              <div className="text-3xl mb-3">{item.icon}</div>
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center mb-3"><item.Icon className="w-5 h-5 text-blue-400" /></div>
               <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
               <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>
             </div>
@@ -238,7 +239,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-xl">📚</span>
+              <GraduationCap className="w-5 h-5 text-blue-400" />
               <span className="text-white font-semibold">Campus Gigs</span>
             </div>
             <div className="flex gap-6 text-sm text-slate-500">

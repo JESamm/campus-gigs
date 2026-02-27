@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
+import { Globe, Lock } from "lucide-react";
 
 export default function CreateProjectPage() {
   const { data: session } = useSession();
@@ -194,7 +195,7 @@ export default function CreateProjectPage() {
                       : "border-slate-600 bg-slate-700 hover:border-slate-500"
                   }`}
                 >
-                  <span className="text-2xl">🌎</span>
+                  <Globe className="w-6 h-6 text-emerald-400" />
                   <div>
                     <p className="font-medium text-white text-sm">Public</p>
                     <p className="text-xs text-slate-400">Anyone can view files & discussions</p>
@@ -209,7 +210,7 @@ export default function CreateProjectPage() {
                       : "border-slate-600 bg-slate-700 hover:border-slate-500"
                   }`}
                 >
-                  <span className="text-2xl">🔒</span>
+                  <Lock className="w-6 h-6 text-rose-400" />
                   <div>
                     <p className="font-medium text-white text-sm">Private</p>
                     <p className="text-xs text-slate-400">Only contributors can access content</p>

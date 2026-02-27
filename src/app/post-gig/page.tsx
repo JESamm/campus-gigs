@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
+import { Paperclip } from "lucide-react";
 
 export default function PostGigPage() {
   const { data: session } = useSession();
@@ -260,7 +261,7 @@ export default function PostGigPage() {
                 <ul className="mt-2 space-y-1">
                   {attachments.map((url) => (
                     <li key={url} className="flex items-center justify-between bg-slate-700/50 px-3 py-2 rounded-md">
-                      <span className="text-slate-300 text-sm truncate">📎 {url.split("/").pop()}</span>
+                      <span className="text-slate-300 text-sm truncate flex items-center gap-1.5"><Paperclip className="w-3.5 h-3.5" /> {url.split("/").pop()}</span>
                       <button
                         type="button"
                         onClick={() => removeAttachment(url)}

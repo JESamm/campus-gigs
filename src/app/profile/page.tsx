@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
+import { CheckCircle2 } from "lucide-react";
 
 interface ProfileData {
   id: string;
@@ -334,8 +335,8 @@ export default function ProfilePage() {
               </div>
             )}
             {saveSuccess && (
-              <div className="bg-emerald-900/20 border border-emerald-700 text-emerald-300 px-4 py-3 rounded-md text-sm">
-                ✓ Profile saved successfully!
+              <div className="bg-emerald-900/20 border border-emerald-700 text-emerald-300 px-4 py-3 rounded-md text-sm flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" /> Profile saved successfully!
               </div>
             )}
 

@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
+import { Paperclip, CheckCircle2 } from "lucide-react";
 
 interface GigDetail {
   id: string;
@@ -219,7 +220,7 @@ export default function GigDetailPage() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm transition-colors"
                       >
-                        <span>📎</span>
+                        <Paperclip className="w-4 h-4" />
                         {url.split("/").pop()}
                       </a>
                     </li>
@@ -310,8 +311,8 @@ export default function GigDetailPage() {
                     </Button>
                   </>
                 ) : applySuccess || alreadyApplied ? (
-                  <div className="bg-emerald-900/30 border border-emerald-700 text-emerald-300 px-4 py-3 rounded-lg text-sm text-center">
-                    ✓ Application submitted!
+                  <div className="bg-emerald-900/30 border border-emerald-700 text-emerald-300 px-4 py-3 rounded-lg text-sm text-center flex items-center justify-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" /> Application submitted!
                   </div>
                 ) : isFull ? (
                   <Button className="w-full" disabled>

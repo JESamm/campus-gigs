@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
+import { Image, FileText, Archive, Video, Music, Folder, FolderOpen, Lock, Globe, MessageSquare, ClipboardList, Users, Pin, ChevronUp, ChevronDown, Crown, User, Paperclip, CheckCircle2, XCircle } from "lucide-react";
 
 interface ProjectMember {
   id: string;
@@ -48,13 +49,14 @@ function timeAgo(iso: string) {
   const h = Math.floor(m/60); if (h < 24) return `${h}h ago`;
   return `${Math.floor(h/24)}d ago`;
 }
-function fileIcon(mime: string) {
-  if (mime.startsWith("image/")) return "🖼️";
-  if (mime.includes("pdf")) return "📄";
-  if (mime.includes("zip")||mime.includes("tar")) return "🧜️";
-  if (mime.startsWith("video/")) return "🎬";
-  if (mime.startsWith("audio/")) return "🎵";
-  return "📁";
+function FileIcon({ mime }: { mime: string }) {
+  const cls = "w-5 h-5 text-slate-400";
+  if (mime.startsWith("image/")) return <Image className={cls} />;
+  if (mime.includes("pdf")) return <FileText className={cls} />;
+  if (mime.includes("zip")||mime.includes("tar")) return <Archive className={cls} />;
+  if (mime.startsWith("video/")) return <Video className={cls} />;
+  if (mime.startsWith("audio/")) return <Music className={cls} />;
+  return <Folder className={cls} />;
 }
 function Av({ user, size=8 }: { user:{name:string;avatar?:string}; size?:number }) {
   const sz = `w-${size} h-${size}`;
@@ -125,9 +127,9 @@ export default function ProjectDetailPage() {
     const res = await fetch("/api/projects/join",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({projectId:id})});
     const d = await res.json();
     if (res.ok) {
-      setJoinMsg("✅ Joined! Welcome to the team.");
+      setJoinMsg("Joined! Welcome to the team.");
       fetch(`/api/projects/${id}`).then(r=>r.json()).then(d=>{ if(d.project) setProject(d.project); });
-    } else setJoinMsg(`❌ ${d.error}`);
+    } else setJoinMsg(d.error);
     setJoining(false);
   };
   const handleDelete = async () => {
@@ -192,10 +194,10 @@ export default function ProjectDetailPage() {
   const mc = project._count.members;
   const isFull = mc >= project.maxMembers;
   const tabs = [
-    {key:"about" as const, label:"📋 About"},
-    {key:"files" as const, label:"📁 Files"},
-    {key:"discussions" as const, label:"💬 Discussions"},
-    {key:"members" as const, label:`👥 Members (${mc})`},
+    {key:"about" as const, label:"About", Icon: ClipboardList},
+    {key:"files" as const, label:"Files", Icon: Folder},
+    {key:"discussions" as const, label:"Discussions", Icon: MessageSquare},
+    {key:"members" as const, label:`Members (${mc})`, Icon: Users},
   ];
 
   return (
@@ -209,8 +211,8 @@ export default function ProjectDetailPage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 flex-wrap mb-2">
                 <h1 className="text-2xl sm:text-3xl font-bold text-white">{project.title}</h1>
-                <span className={`inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full border ${project.visibility==="private"?"bg-rose-900/30 border-rose-700 text-rose-300":"bg-emerald-900/30 border-emerald-700 text-emerald-300"}`}>
-                  {project.visibility==="private"?"🔒 Private":"🌎 Public"}
+                <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${project.visibility==="private"?"bg-rose-900/30 border-rose-700 text-rose-300":"bg-emerald-900/30 border-emerald-700 text-emerald-300"}`}>
+                  {project.visibility==="private"?<><Lock className="w-3 h-3" /> Private</>:<><Globe className="w-3 h-3" /> Public</>}
                 </span>
                 <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${project.status==="open"?"bg-emerald-900/40 text-emerald-400":"bg-slate-700 text-slate-400"}`}>{project.status}</span>
               </div>
@@ -223,7 +225,7 @@ export default function ProjectDetailPage() {
             <div className="flex items-center gap-2">
               {isOwner&&<Button variant="outline" size="sm" onClick={handleDelete} disabled={deleting} className="text-rose-400 border-rose-700 hover:bg-rose-900/20">{deleting?"Deleting…":"Delete"}</Button>}
               {!isOwner&&session&&!isMember&&!isFull&&project.status==="open"&&<Button size="sm" onClick={handleJoin} disabled={joining}>{joining?"Joining…":"Join Project"}</Button>}
-              {isMember&&!isOwner&&<span className="text-xs bg-blue-900/40 text-blue-300 border border-blue-700 px-3 py-1.5 rounded-full">✓ Member</span>}
+              {isMember&&!isOwner&&<span className="inline-flex items-center gap-1.5 text-xs bg-blue-900/40 text-blue-300 border border-blue-700 px-3 py-1.5 rounded-full"><CheckCircle2 className="w-3 h-3" /> Member</span>}
               {isFull&&!isMember&&!isOwner&&<span className="text-xs bg-slate-700 text-slate-400 px-3 py-1.5 rounded-full">Team Full</span>}
             </div>
           </div>
@@ -233,7 +235,7 @@ export default function ProjectDetailPage() {
         {/* Private guard */}
         {project.visibility==="private"&&!canAccess ? (
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-12 text-center">
-            <p className="text-4xl mb-4">🔒</p>
+            <Lock className="w-10 h-10 text-slate-500 mx-auto mb-4" />
             <p className="text-white font-semibold text-lg mb-2">This project is private</p>
             <p className="text-slate-400 text-sm">You need to be a contributor to view files and discussions.</p>
           </div>
@@ -243,7 +245,7 @@ export default function ProjectDetailPage() {
             <div className="flex gap-1 border-b border-slate-800 mb-6 overflow-x-auto">
               {tabs.map(t=>(
                 <button key={t.key} onClick={()=>setActiveTab(t.key)}
-                  className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap -mb-px ${activeTab===t.key?"border-blue-500 text-white":"border-transparent text-slate-400 hover:text-white"}`}>{t.label}</button>
+                  className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap -mb-px ${activeTab===t.key?"border-blue-500 text-white":"border-transparent text-slate-400 hover:text-white"}`}><t.Icon className="w-4 h-4" />{t.label}</button>
               ))}
             </div>
 
@@ -257,7 +259,7 @@ export default function ProjectDetailPage() {
                   </div>
                   {project.readme&&(
                     <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-                      <h2 className="text-white font-semibold text-lg mb-3">📄 README</h2>
+                      <h2 className="text-white font-semibold text-lg mb-3 flex items-center gap-2"><FileText className="w-5 h-5 text-slate-400" /> README</h2>
                       <pre className="text-slate-300 leading-relaxed whitespace-pre-wrap font-mono text-sm overflow-x-auto">{project.readme}</pre>
                     </div>
                   )}
@@ -270,7 +272,7 @@ export default function ProjectDetailPage() {
                       <div className="flex justify-between"><span className="text-slate-400">Members</span><span className="text-white">{mc} / {project.maxMembers}</span></div>
                       <div className="flex justify-between"><span className="text-slate-400">Status</span><span className="text-white capitalize">{project.status}</span></div>
                       <div className="flex justify-between"><span className="text-slate-400">Visibility</span>
-                        <span className={project.visibility==="private"?"text-rose-400":"text-emerald-400"}>{project.visibility==="private"?"🔒 Private":"🌎 Public"}</span>
+                        <span className={project.visibility==="private"?"text-rose-400":"text-emerald-400"}>{project.visibility==="private"?"Private":"Public"}</span>
                       </div>
                     </div>
                   </div>
@@ -310,14 +312,14 @@ export default function ProjectDetailPage() {
                 </div>
                 {files.length===0?(
                   <div className="bg-slate-800 border border-slate-700 rounded-xl p-12 text-center">
-                    <p className="text-4xl mb-3">📂</p><p className="text-slate-400">No files uploaded yet</p>
+                    <FolderOpen className="w-10 h-10 text-slate-500 mx-auto mb-3" /><p className="text-slate-400">No files uploaded yet</p>
                     {(isOwner||isMember)&&<p className="text-slate-500 text-sm mt-1">Click "Upload File" to share project files</p>}
                   </div>
                 ):(
                   <div className="bg-slate-800 border border-slate-700 rounded-xl divide-y divide-slate-700">
                     {files.map(f=>(
                       <div key={f.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-700/30 group">
-                        <span className="text-xl">{fileIcon(f.mimeType)}</span>
+                        <FileIcon mime={f.mimeType} />
                         <div className="flex-1 min-w-0">
                           <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline font-medium text-sm truncate block">{f.name}</a>
                           <p className="text-xs text-slate-500">{fmtSize(f.size)} · {f.uploadedBy.name} · {timeAgo(f.createdAt)}</p>
@@ -354,7 +356,7 @@ export default function ProjectDetailPage() {
                 )}
                 {discussions.length===0?(
                   <div className="bg-slate-800 border border-slate-700 rounded-xl p-12 text-center">
-                    <p className="text-4xl mb-3">💬</p><p className="text-slate-400">No discussions yet — start one!</p>
+                    <MessageSquare className="w-10 h-10 text-slate-500 mx-auto mb-3" /><p className="text-slate-400">No discussions yet — start one!</p>
                   </div>
                 ):(
                   <div className="space-y-3">
@@ -365,13 +367,13 @@ export default function ProjectDetailPage() {
                           <Av user={disc.author} size={8}/>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              {disc.pinned&&<span className="text-xs bg-amber-900/40 text-amber-400 border border-amber-800/50 px-2 py-0.5 rounded-full">📌 Pinned</span>}
+                              {disc.pinned&&<span className="inline-flex items-center gap-1 text-xs bg-amber-900/40 text-amber-400 border border-amber-800/50 px-2 py-0.5 rounded-full"><Pin className="w-3 h-3" /> Pinned</span>}
                               {disc.closed&&<span className="text-xs bg-slate-700 text-slate-400 px-2 py-0.5 rounded-full">✕ Closed</span>}
                               <span className="font-semibold text-white text-sm">{disc.title}</span>
                             </div>
                             <p className="text-slate-400 text-xs mt-0.5">{disc.author.name} · {timeAgo(disc.createdAt)} · {disc._count.replies} {disc._count.replies===1?"reply":"replies"}</p>
                           </div>
-                          <span className="text-slate-500 text-xs">{openDiscId===disc.id?"▲":"▼"}</span>
+                          <span className="text-slate-500 text-xs">{openDiscId===disc.id?<ChevronUp className="w-4 h-4" />:<ChevronDown className="w-4 h-4" />}</span>
                         </button>
                         {openDiscId===disc.id&&(
                           <div className="border-t border-slate-700">
@@ -421,8 +423,8 @@ export default function ProjectDetailPage() {
                       {m.user.university&&<p className="text-slate-400 text-xs mt-0.5">{m.user.university}{m.user.major?` · ${m.user.major}`:""}</p>}
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={`text-xs px-2.5 py-1 rounded-full border ${m.role==="creator"?"bg-amber-900/30 border-amber-700 text-amber-300":"bg-blue-900/30 border-blue-700 text-blue-300"}`}>
-                        {m.role==="creator"?"👑 Owner":"👤 Member"}
+                      <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border ${m.role==="creator"?"bg-amber-900/30 border-amber-700 text-amber-300":"bg-blue-900/30 border-blue-700 text-blue-300"}`}>
+                        {m.role==="creator"?<><Crown className="w-3 h-3" /> Owner</>:<><User className="w-3 h-3" /> Member</>}
                       </span>
                       {session&&m.user.id!==session.user?.id&&(
                         <Link href={`/messages?to=${m.user.id}&name=${encodeURIComponent(m.user.name)}`}>

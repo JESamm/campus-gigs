@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function SignupPage() {
@@ -68,7 +69,7 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <a href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
-            ← Back to home
+            <ArrowLeft className="w-4 h-4" /> Back to home
           </a>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-8">

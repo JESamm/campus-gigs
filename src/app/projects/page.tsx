@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
+import { Info } from "lucide-react";
 
 interface Project {
   id: string;
@@ -56,8 +57,8 @@ export default function ProjectsPage() {
       {!session && (
         <div className="bg-purple-900/30 border-b border-purple-800/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
-            <p className="text-purple-200 text-sm">
-              👋 You&apos;re browsing as a guest. Sign up to join or create projects!
+            <p className="text-purple-200 text-sm flex items-center gap-2">
+              <Info className="w-4 h-4 flex-shrink-0" /> You&apos;re browsing as a guest. Sign up to join or create projects!
             </p>
             <Link href="/signup">
               <Button size="sm">Sign up free</Button>

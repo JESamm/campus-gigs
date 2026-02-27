@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Users, ClipboardList, Handshake, MessageSquare, UserCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 interface UserStats {
@@ -83,12 +84,12 @@ export default function DashboardPage() {
           </h2>
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: "Students Registered", value: stats.totalUsers, icon: "👥", color: "text-blue-400" },
-              { label: "Gigs Posted", value: stats.totalGigs, icon: "📋", color: "text-emerald-400" },
-              { label: "Active Projects", value: stats.totalProjects, icon: "🤝", color: "text-purple-400" },
+              { label: "Students Registered", value: stats.totalUsers, icon: Users, color: "text-blue-400", bg: "bg-blue-500/10" },
+              { label: "Gigs Posted", value: stats.totalGigs, icon: ClipboardList, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+              { label: "Active Projects", value: stats.totalProjects, icon: Handshake, color: "text-purple-400", bg: "bg-purple-500/10" },
             ].map((s) => (
               <div key={s.label} className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex items-center gap-4">
-                <span className="text-3xl">{s.icon}</span>
+                <div className={`w-12 h-12 rounded-xl ${s.bg} flex items-center justify-center`}><s.icon className={`w-6 h-6 ${s.color}`} /></div>
                 <div>
                   <div className={`text-3xl font-bold ${s.color}`}>
                     {isLoading ? <Skeleton /> : s.value.toLocaleString()}
@@ -131,7 +132,7 @@ export default function DashboardPage() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-7">
-            <div className="text-2xl mb-3">📋</div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-3"><ClipboardList className="w-5 h-5 text-emerald-400" /></div>
             <h2 className="text-lg font-bold text-white mb-2">Gig Marketplace</h2>
             <p className="text-slate-400 text-sm mb-5">
               Post a gig or browse freelance work that fits your schedule.
@@ -147,7 +148,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-7">
-            <div className="text-2xl mb-3">🤝</div>
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center mb-3"><Handshake className="w-5 h-5 text-purple-400" /></div>
             <h2 className="text-lg font-bold text-white mb-2">Collaboration Projects</h2>
             <p className="text-slate-400 text-sm mb-5">
               Create a project or join existing ones to collaborate with peers.
@@ -163,7 +164,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-7">
-            <div className="text-2xl mb-3">💬</div>
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center mb-3"><MessageSquare className="w-5 h-5 text-rose-400" /></div>
             <h2 className="text-lg font-bold text-white mb-2">Messages</h2>
             <p className="text-slate-400 text-sm mb-5">
               Chat with collaborators and gig partners directly.
@@ -181,7 +182,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-7">
-            <div className="text-2xl mb-3">👤</div>
+            <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center mb-3"><UserCircle className="w-5 h-5 text-sky-400" /></div>
             <h2 className="text-lg font-bold text-white mb-2">My Profile</h2>
             <p className="text-slate-400 text-sm mb-5">
               Update your bio, skills, university and year of study.
